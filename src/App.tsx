@@ -57,7 +57,7 @@ export default function App() {
       </main>
 
       <footer className="foot reveal" style={delay(1)}>
-        © {year} {profile.name} · built with react + vite
+        © {year} {profile.name} · built with react + vite+
       </footer>
 
       <div className="noise" aria-hidden="true" />
