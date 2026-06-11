@@ -1,6 +1,7 @@
 # s-katada.github.io
 
 https://s-katada.github.io — 自己紹介ペライチページ。
+苗字の「片田」にちなんだ、片田舎の田園風景テーマ(自然・ほのぼの)。
 
 ## Stack
 

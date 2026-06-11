@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 import { profile } from "./config";
-import { Starfield } from "./components/Starfield";
-import { CursorGlow } from "./components/CursorGlow";
-import { GitHubIcon, XIcon } from "./components/icons";
+import { ParallaxDriver } from "./components/Parallax";
+import { Scene } from "./components/Scene";
+import { GitHubIcon, SproutIcon, XIcon } from "./components/icons";
 
 const delay = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 
@@ -11,28 +11,19 @@ export default function App() {
 
   return (
     <>
-      <div className="backdrop" aria-hidden="true">
-        <div className="aurora aurora-a" />
-        <div className="aurora aurora-b" />
-        <div className="aurora aurora-c" />
-        <Starfield />
-        <div className="grid-overlay" />
-      </div>
-
-      <CursorGlow />
+      <Scene />
+      <ParallaxDriver />
 
       <main className="hero">
-        <div className="halo" aria-hidden="true" />
-        <p className="hello reveal" style={delay(0.1)}>
+        <p className="welcome reveal" style={delay(0.05)}>
+          {profile.welcome}
+        </p>
+        <p className="hello reveal" style={delay(0.2)}>
           {profile.greeting}
         </p>
-        <h1 className="name reveal" style={delay(0.3)}>
-          <span className="glitch" data-text={profile.name}>
-            {profile.name}
-          </span>
-          <span className="caret" aria-hidden="true">
-            _
-          </span>
+        <h1 className="name reveal" style={delay(0.35)}>
+          {profile.name}
+          <SproutIcon />
         </h1>
         <p className="role reveal" style={delay(0.5)}>
           {profile.role}
@@ -56,7 +47,7 @@ export default function App() {
         </nav>
       </main>
 
-      <footer className="foot reveal" style={delay(1)}>
+      <footer className="foot reveal" style={delay(0.95)}>
         © {year} {profile.name} · built with react + vite+
       </footer>
 

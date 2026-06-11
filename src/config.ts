@@ -1,5 +1,6 @@
 // ページに表示する内容はここに集約してある。書き換えるだけで反映される。
 export const profile = {
+  welcome: "🌾 ようこそ、片田舎へ",
   greeting: "hi, i am",
   name: "s-katada",
   role: "Software Engineer / Keyboard Builder",
