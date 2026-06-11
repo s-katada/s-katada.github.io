@@ -267,72 +267,113 @@ body {
   }
 }
 
-.march {
+.desk {
   position: absolute;
-  bottom: 2%;
-  left: 8%;
-  width: 230px;
-  animation: march-x 52s linear infinite;
-  animation-delay: -18s; /* ロード直後から画面内にいるように */
+  bottom: 2.5%;
+  left: 50%;
+  width: clamp(250px, 34vw, 400px);
+  transform: translateX(-50%);
 }
 
-.march svg {
+.desk svg {
   display: block;
   width: 100%;
   overflow: visible;
+  font-family: var(--font-round);
 }
 
-@keyframes march-x {
-  from {
-    transform: translateX(-32vw);
-  }
-  to {
-    transform: translateX(112vw);
-  }
+.clack {
+  transform-box: fill-box;
+  animation: clack 1.3s linear infinite;
+  animation-delay: var(--cd, 0s);
 }
 
-.bob {
-  animation: bob 0.34s ease-in-out infinite alternate;
-  animation-delay: var(--bd, 0s);
-}
-
-@keyframes bob {
-  from {
+@keyframes clack {
+  0%,
+  10%,
+  100% {
     transform: translateY(0);
   }
-  to {
-    transform: translateY(-2.6px);
+  5% {
+    transform: translateY(1.6px);
   }
 }
 
-.stem {
+.steam {
   transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: stem-sway 1.7s ease-in-out infinite alternate;
-  animation-delay: var(--sd, 0s);
+  animation: steam-rise 2.6s ease-out infinite;
+  animation-delay: var(--pd, 0s);
+  opacity: 0;
 }
 
-@keyframes stem-sway {
-  from {
-    transform: rotate(-7deg);
+@keyframes steam-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
   }
-  to {
-    transform: rotate(7deg);
+  25% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-7px);
   }
 }
 
-.prop {
+.smoke {
   transform-box: fill-box;
-  transform-origin: 50% 50%;
-  animation: prop-spin 5s linear infinite;
+  animation: smoke-rise 4.8s ease-out infinite;
+  animation-delay: var(--pd, 0s);
+  opacity: 0;
 }
 
-@keyframes prop-spin {
-  from {
-    transform: rotate(0deg);
+@keyframes smoke-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
   }
-  to {
-    transform: rotate(360deg);
+  18% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(7px, -22px) scale(1.6);
+  }
+}
+
+.kata {
+  animation: kata-pop 2.6s ease-in-out infinite;
+  animation-delay: var(--pd, 0s);
+  opacity: 0;
+}
+
+@keyframes kata-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  15%,
+  60% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.blinkc {
+  animation: blinkc 1.1s steps(1, end) infinite;
+}
+
+@keyframes blinkc {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
   }
 }
 
@@ -581,12 +622,21 @@ body {
   .sway-soft,
   .wing,
   .sprout,
-  .march,
-  .bob,
-  .stem,
-  .prop,
+  .clack,
+  .blinkc,
   .name-text:hover {
     animation: none !important;
+  }
+
+  .kata {
+    animation: none;
+    opacity: 0.85;
+  }
+
+  .steam,
+  .smoke {
+    animation: none;
+    opacity: 0;
   }
 
   .butterfly,

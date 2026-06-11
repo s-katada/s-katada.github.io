@@ -1,7 +1,5 @@
 import type { CSSProperties } from "react";
 
-type StemTop = "leaf" | "bud" | "flower";
-
 // 前景の草花の配置: [種類, x座標, スケール, 揺れの開始遅延(s)]
 const FLORA: Array<["tuft" | "daisy" | "clover", number, number, number]> = [
   ["tuft", 40, 1.8, 0],
@@ -18,93 +16,320 @@ const FLORA: Array<["tuft" | "daisy" | "clover", number, number, number]> = [
   ["clover", 1420, 1.6, 0.8],
 ];
 
-const sd = (s: number) => ({ "--sd": `${s}s` }) as CSSProperties;
-const bd = (s: number) => ({ "--bd": `${s}s` }) as CSSProperties;
 const rd = (s: number) => ({ "--rd": `${s}s` }) as CSSProperties;
+const cd = (s: number) => ({ "--cd": `${s}s` }) as CSSProperties;
+const pd = (s: number) => ({ "--pd": `${s}s` }) as CSSProperties;
 
-// 頭の茎。成長段階: 葉っぱ → つぼみ → 花
-function Stem({ top, delay }: { top: StemTop; delay: number }) {
+const KEY_FILL = "#fffdf5";
+const KEY_EDGE = "#d8c9a8";
+const ACCENT_LEAF = "#b5d39a";
+const ACCENT_PEACH = "#f0b9a4";
+
+function Keycap({
+  x,
+  y,
+  w = 10,
+  h = 10,
+  fill = KEY_FILL,
+  rotate,
+  clack,
+}: {
+  x: number;
+  y: number;
+  w?: number;
+  h?: number;
+  fill?: string;
+  rotate?: number;
+  clack?: number;
+}) {
+  // CSS の transform アニメ (.clack) は属性 transform を上書きするので、回転は親 g に分離する
+  const rect = (
+    <rect
+      className={clack === undefined ? undefined : "clack"}
+      style={clack === undefined ? undefined : cd(clack)}
+      x={x}
+      y={y}
+      width={w}
+      height={h}
+      rx="2.5"
+      fill={fill}
+      stroke={KEY_EDGE}
+      strokeWidth="0.8"
+    />
+  );
+  if (rotate) {
+    return <g transform={`rotate(${rotate} ${x + w / 2} ${y + h / 2})`}>{rect}</g>;
+  }
+  return rect;
+}
+
+// claw44 の片手分: 3行 x 6列のカラムスタガー + 扇形に並ぶ親指キー4つ
+function Claw44Half() {
+  const stagger = [9, 5, 0, 2, 6, 8];
+  const keys = [];
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 6; c++) {
+      keys.push([c * 11, r * 11 + stagger[c]] as const);
+    }
+  }
   return (
-    <g className="stem" style={sd(delay)}>
-      <path
-        d="M0 -29 C 0 -33 -1 -36 -1 -39"
-        stroke="#4d8038"
-        strokeWidth="1.8"
-        fill="none"
-        strokeLinecap="round"
+    <g>
+      <rect
+        x="-5"
+        y="-5"
+        width="76"
+        height="70"
+        rx="9"
+        fill="#f4e9d2"
+        stroke="#dcc9a4"
+        strokeWidth="1.2"
       />
-      {top === "leaf" && (
-        <ellipse
-          cx="-4.5"
-          cy="-42.5"
-          rx="5.5"
-          ry="3"
-          transform="rotate(-32 -4.5 -42.5)"
-          fill="#74b153"
+      {keys.map(([x, y], i) => (
+        <Keycap
+          key={i}
+          x={x}
+          y={y}
+          fill={i === 14 ? ACCENT_LEAF : KEY_FILL}
+          clack={[1, 8, 16].includes(i) ? (i * 0.13) % 1.2 : undefined}
         />
-      )}
-      {top === "bud" && (
-        <>
-          <circle cx="-1.5" cy="-41.5" r="3.2" fill="#f0a8c4" />
-          <circle cx="-2.3" cy="-42.3" r="1.1" fill="#fbe3ec" />
-        </>
-      )}
-      {top === "flower" && (
-        <>
-          <circle cx="-5" cy="-43.5" r="2.6" fill="#fffdf5" />
-          <circle cx="2" cy="-43.5" r="2.6" fill="#fffdf5" />
-          <circle cx="-1.5" cy="-46.5" r="2.6" fill="#fffdf5" />
-          <circle cx="-1.5" cy="-40.5" r="2.6" fill="#fffdf5" />
-          <circle cx="-1.5" cy="-43.5" r="2" fill="#f6c94a" />
-        </>
-      )}
+      ))}
+      <Keycap x={31} y={36} w={10} h={11} rotate={10} fill={ACCENT_PEACH} clack={0.45} />
+      <Keycap x={42} y={39.5} w={10} h={11} rotate={18} />
+      <Keycap x={52.5} y={44.5} w={10} h={11} rotate={26} />
+      <Keycap x={62} y={51} w={10} h={11} rotate={34} />
     </g>
   );
 }
 
-// 右向きに歩く庭のこびと。色ごとに顔つきがちょっと違う。
-function Walker({
-  color,
-  dark,
-  top,
-  stemDelay,
-  face,
-}: {
-  color: string;
-  dark: string;
-  top: StemTop;
-  stemDelay: number;
-  face: "nose" | "ear" | "mouth";
-}) {
+// 小人キーの片手分: アーチ型スタガーの 5列 x 3行 + 内側へ下がる親指キー3つ + トラックボール
+function KobitoHalf() {
+  const stagger = [5, 2.5, 0, 2.5, 5];
+  const keys = [];
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 5; c++) {
+      keys.push([c * 11, r * 11 + stagger[c]] as const);
+    }
+  }
   return (
-    <>
-      <ellipse cx="-3" cy="-2.2" rx="2.6" ry="2.2" fill={dark} />
-      <ellipse cx="3.5" cy="-2.2" rx="2.6" ry="2.2" fill={dark} />
-      <ellipse cx="0" cy="-9" rx="6.8" ry="6.2" fill={color} />
-      {face === "ear" && (
-        <ellipse
-          cx="-7.5"
-          cy="-23"
-          rx="2.6"
-          ry="4.2"
-          fill={color}
-          stroke={dark}
-          strokeWidth="0.6"
+    <g>
+      <rect
+        x="-5"
+        y="-5"
+        width="78"
+        height="62"
+        rx="8"
+        fill="#f4e9d2"
+        stroke="#dcc9a4"
+        strokeWidth="1.2"
+      />
+      {keys.map(([x, y], i) => (
+        <Keycap
+          key={i}
+          x={x}
+          y={y}
+          fill={i === 7 ? ACCENT_PEACH : KEY_FILL}
+          clack={[3, 11].includes(i) ? (i * 0.21) % 1.2 : undefined}
         />
-      )}
-      <circle cx="1" cy="-21" r="9" fill={color} />
-      {face === "nose" && (
-        <path d="M9.5 -22 Q 14 -21.5 15 -19.5 Q 12 -18 9.5 -18.5 Z" fill={color} />
-      )}
-      {face === "mouth" && <ellipse cx="7.6" cy="-16.5" rx="2" ry="1.3" fill={dark} />}
-      <circle cx="5.5" cy="-23" r="3" fill="#fff" />
-      <circle cx="6.6" cy="-23" r="1.4" fill="#2e2620" />
-      <Stem top={top} delay={stemDelay} />
-    </>
+      ))}
+      <Keycap x={22} y={35.5} clack={0.8} />
+      <Keycap x={33} y={38} />
+      <Keycap x={44} y={40.5} fill={ACCENT_LEAF} />
+      <circle cx="61" cy="40" r="8.5" fill="#c9b08a" />
+      <circle cx="61" cy="40" r="6.5" fill="#cf5b48" />
+      <circle cx="58.8" cy="37.8" r="1.8" fill="#fff" opacity="0.85" />
+    </g>
   );
 }
 
-// ピクミン風の庭: 空・太陽・雲・丘・ポッド・木・畑・草花・行進するこびとたち・ちょうちょ。
+// 庭の作業デスク: ノートPC + claw44 + 小人キー + コーヒー。カタカタ開発中。
+function GardenDesk() {
+  return (
+    <div className="desk">
+      <svg viewBox="0 0 430 250" overflow="visible" role="presentation">
+        {/* 脚と足元の草 */}
+        <rect x="42" y="188" width="13" height="50" rx="4" fill="#c69d6a" />
+        <rect x="375" y="188" width="13" height="50" rx="4" fill="#c69d6a" />
+        <path
+          d="M36 238 C 34 230 30 226 26 223 M42 238 C 42 229 41 225 42 220"
+          stroke="#4d8038"
+          strokeWidth="2.2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          d="M394 238 C 396 230 400 226 404 223 M388 238 C 388 229 389 225 388 220"
+          stroke="#5d9a44"
+          strokeWidth="2.2"
+          fill="none"
+          strokeLinecap="round"
+        />
+        {/* 植木鉢 */}
+        <path d="M12 224 L 30 224 L 27 240 L 15 240 Z" fill="#e07a5f" />
+        <path
+          d="M21 222 C 21 216 20 212 19 208"
+          stroke="#4d8038"
+          strokeWidth="1.8"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <ellipse
+          cx="15.5"
+          cy="206.5"
+          rx="4.6"
+          ry="2.6"
+          transform="rotate(-35 15.5 206.5)"
+          fill="#74b153"
+        />
+        <ellipse
+          cx="23.5"
+          cy="205.5"
+          rx="4.6"
+          ry="2.6"
+          transform="rotate(25 23.5 205.5)"
+          fill="#8cc46a"
+        />
+
+        {/* ノートPC (奥の縁に開いて置いてある) */}
+        <g>
+          <rect x="150" y="6" width="110" height="72" rx="7" fill="#5a4a3a" />
+          <rect x="156" y="12" width="98" height="58" rx="4" fill="#303b48" />
+          <path d="M163 24 H 205" stroke="#9cc07a" strokeWidth="3.5" strokeLinecap="round" />
+          <path d="M163 33 H 232" stroke="#e8c46a" strokeWidth="3.5" strokeLinecap="round" />
+          <path d="M171 42 H 214" stroke="#7ea8d8" strokeWidth="3.5" strokeLinecap="round" />
+          <path d="M171 51 H 196" stroke="#d8e2ec" strokeWidth="3.5" strokeLinecap="round" />
+          <rect className="blinkc" x="163" y="58" width="9" height="4" rx="1" fill="#9cc07a" />
+          <rect x="138" y="76" width="134" height="9" rx="4" fill="#6b5a48" />
+        </g>
+
+        {/* 机 */}
+        <rect
+          x="8"
+          y="80"
+          width="414"
+          height="116"
+          rx="14"
+          fill="#d9b585"
+          stroke="#c69d6a"
+          strokeWidth="2"
+        />
+        <path
+          d="M30 110 C 120 106 210 108 300 106"
+          stroke="#cfa873"
+          strokeWidth="2"
+          fill="none"
+          opacity="0.6"
+        />
+        <path
+          d="M150 178 C 240 175 330 177 405 174"
+          stroke="#cfa873"
+          strokeWidth="2"
+          fill="none"
+          opacity="0.5"
+        />
+
+        {/* claw44 (左右の半身をハの字に) */}
+        <g transform="translate(26 100)">
+          <g transform="rotate(-7 35 30)">
+            <Claw44Half />
+          </g>
+          <g transform="translate(172 0) scale(-1 1)">
+            <g transform="rotate(-7 35 30)">
+              <Claw44Half />
+            </g>
+          </g>
+        </g>
+
+        {/* 小人キー (ちいさい相棒) */}
+        <g transform="translate(228 106) scale(0.88)">
+          <g transform="rotate(-6 35 26)">
+            <KobitoHalf />
+          </g>
+          <g transform="translate(158 0) scale(-1 1)">
+            <g transform="rotate(-6 35 26)">
+              <KobitoHalf />
+            </g>
+          </g>
+        </g>
+
+        {/* コーヒー */}
+        <g>
+          <circle cx="394" cy="106" r="13" fill="#fffdf5" stroke="#d8c9a8" strokeWidth="1.5" />
+          <circle cx="394" cy="106" r="9" fill="#7a5236" />
+          <path
+            d="M394 92 C 391 86 396 82 393 76"
+            className="steam"
+            style={pd(0)}
+            stroke="#fff"
+            strokeWidth="2.2"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <path
+            d="M401 94 C 398 89 403 85 400 80"
+            className="steam"
+            style={pd(1.1)}
+            stroke="#fff"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </g>
+
+        {/* 組み立て中: ドライバーとキーキャップ */}
+        <g transform="rotate(24 372 168)">
+          <rect x="358" y="165" width="22" height="3.5" rx="1.5" fill="#9aa3ad" />
+          <rect x="378" y="162.5" width="13" height="8.5" rx="3.5" fill="#e07a5f" />
+        </g>
+        <Keycap x={324} y={172} w={9} h={9} />
+        <Keycap x={337} y={178} w={9} h={9} fill={ACCENT_LEAF} rotate={14} />
+
+        {/* 名札 */}
+        <g>
+          <rect
+            x="80"
+            y="181"
+            width="56"
+            height="15"
+            rx="7.5"
+            fill="#fffdf5"
+            stroke="#dcc9a4"
+            strokeWidth="1"
+          />
+          <text x="108" y="192" textAnchor="middle" fontSize="10" fill="#7c6a4d">
+            claw44
+          </text>
+          <rect
+            x="266"
+            y="181"
+            width="60"
+            height="15"
+            rx="7.5"
+            fill="#fffdf5"
+            stroke="#dcc9a4"
+            strokeWidth="1"
+          />
+          <text x="296" y="192.5" textAnchor="middle" fontSize="10" fill="#7c6a4d">
+            小人キー
+          </text>
+        </g>
+
+        {/* カタカタ */}
+        <g transform="rotate(-5 64 62)">
+          <text className="kata" style={pd(0)} x="64" y="62" fontSize="15" fill="#7c6a4d">
+            カタカタ…
+          </text>
+        </g>
+        <g transform="rotate(4 300 70)">
+          <text className="kata" style={pd(1.4)} x="300" y="70" fontSize="12" fill="#8a7a5f">
+            ｶﾀｶﾀ
+          </text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// ポツンと一軒家の庭で、自作キーボードをカタカタ打ちながら開発している風景。
 export function Scene() {
   return (
     <div className="scene" aria-hidden="true">
@@ -245,53 +470,25 @@ export function Scene() {
               d="M0 392 C 280 318 520 316 760 372 C 1000 426 1180 338 1440 370 L 1440 520 L 0 520 Z"
               fill="#8fc06c"
             />
-            {/* オニオン風ポッド */}
-            <g transform="translate(330 340)">
-              <path d="M-14 4 L -30 26" stroke="#b9986b" strokeWidth="3.5" strokeLinecap="round" />
-              <path d="M14 4 L 30 26" stroke="#b9986b" strokeWidth="3.5" strokeLinecap="round" />
-              <path d="M0 8 L 0 28" stroke="#b9986b" strokeWidth="3.5" strokeLinecap="round" />
-              <ellipse cx="0" cy="-14" rx="26" ry="23" fill="#e8533f" />
-              <path
-                d="M-11 -33 C -13 -22 -13 -6 -11 5"
-                stroke="#f2937f"
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
+            {/* ポツンと一軒家 (煙突から湯気) */}
+            <g transform="translate(330 352)">
+              <circle className="smoke" style={pd(0)} cx="17" cy="-52" r="4.5" fill="#fff" />
+              <circle className="smoke" style={pd(1.6)} cx="17" cy="-52" r="5.5" fill="#fff" />
+              <circle className="smoke" style={pd(3.2)} cx="17" cy="-52" r="4" fill="#fff" />
+              <rect x="11" y="-44" width="12" height="18" rx="2" fill="#c1705a" />
+              <polygon points="-34,-18 0,-46 34,-18" fill="#d97f5f" />
+              <rect
+                x="-26"
+                y="-18"
+                width="52"
+                height="30"
+                rx="3"
+                fill="#fff6e3"
+                stroke="#e3cfa6"
+                strokeWidth="2"
               />
-              <path
-                d="M0 -37 C 0 -24 0 -8 0 8"
-                stroke="#f2937f"
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
-              />
-              <path
-                d="M11 -33 C 13 -22 13 -6 11 5"
-                stroke="#f2937f"
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
-              />
-              <path d="M0 -37 L 0 -43" stroke="#4d8038" strokeWidth="2" />
-              <g className="prop">
-                <ellipse cx="0" cy="-45" rx="11" ry="2.8" fill="#b9d9a0" />
-                <ellipse
-                  cx="0"
-                  cy="-45"
-                  rx="11"
-                  ry="2.8"
-                  transform="rotate(60 0 -45)"
-                  fill="#b9d9a0"
-                />
-                <ellipse
-                  cx="0"
-                  cy="-45"
-                  rx="11"
-                  ry="2.8"
-                  transform="rotate(120 0 -45)"
-                  fill="#b9d9a0"
-                />
-              </g>
+              <rect x="-7" y="-2" width="14" height="14" rx="2" fill="#c89b6a" />
+              <circle cx="-14" cy="-7" r="4.5" fill="#ffd98a" stroke="#e3cfa6" strokeWidth="1.5" />
             </g>
             {/* 木 */}
             <g transform="translate(1080 352)">
@@ -339,43 +536,7 @@ export function Scene() {
         </svg>
       </div>
 
-      {/* こびとたちの行進 (スペースバー運搬中) */}
-      <div className="march">
-        <svg viewBox="0 -58 230 62" overflow="visible">
-          <g transform="translate(16 0)">
-            <g className="bob" style={bd(0)}>
-              <Walker color="#e8533f" dark="#c23a28" top="leaf" stemDelay={0} face="nose" />
-            </g>
-          </g>
-          <g transform="translate(58 0)">
-            <g className="bob" style={bd(0.12)}>
-              <Walker color="#f2c14e" dark="#cf9d33" top="bud" stemDelay={0.4} face="ear" />
-            </g>
-          </g>
-          <g transform="translate(104 0)">
-            <g className="bob" style={bd(0.06)}>
-              <Walker color="#4f86c6" dark="#3a69a3" top="flower" stemDelay={0.2} face="mouth" />
-              <g transform="translate(48 0)">
-                <Walker color="#e8533f" dark="#c23a28" top="leaf" stemDelay={0.55} face="nose" />
-              </g>
-              <path d="M5 -15 L 10 -30" stroke="#3a69a3" strokeWidth="2" strokeLinecap="round" />
-              <path d="M43 -15 L 38 -30" stroke="#c23a28" strokeWidth="2" strokeLinecap="round" />
-              <path
-                d="M-2 -31 L 50 -31 L 45 -40 L 3 -40 Z"
-                fill="#fffdf5"
-                stroke="#d8c9a8"
-                strokeWidth="1.5"
-              />
-              <path d="M2 -33.5 L 46 -33.5" stroke="#ece0c6" strokeWidth="1" />
-            </g>
-          </g>
-          <g transform="translate(204 0)">
-            <g className="bob" style={bd(0.2)}>
-              <Walker color="#f2c14e" dark="#cf9d33" top="leaf" stemDelay={0.8} face="ear" />
-            </g>
-          </g>
-        </svg>
-      </div>
+      <GardenDesk />
 
       <div className="butterfly">
         <svg viewBox="0 0 44 32">

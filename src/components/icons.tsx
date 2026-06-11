@@ -14,25 +14,19 @@ export function XIcon() {
   );
 }
 
-// 名前の横でゆらゆら揺れる、頭から生えてるアレ(茎+葉っぱ)
+// 名前の横でゆらゆら揺れる新芽
 export function SproutIcon() {
   return (
     <svg className="sprout" viewBox="0 0 24 24" aria-hidden="true">
       <path
-        d="M12 22 C 12 17 11.5 13 10.5 9.5"
+        d="M12 22 C 12 16 12 12 12 9"
         fill="none"
-        stroke="#4d8038"
+        stroke="#5c9444"
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <ellipse cx="8" cy="5.5" rx="6.4" ry="3.7" transform="rotate(-38 8 5.5)" fill="#74b153" />
-      <path
-        d="M11.5 8.5 C 9 6.5 6.5 4.5 4.5 3"
-        fill="none"
-        stroke="#5c9444"
-        strokeWidth="0.9"
-        strokeLinecap="round"
-      />
+      <path d="M12 11 C 7 11 4.5 8 4 4.5 C 8 4.5 11.5 6.5 12 11 Z" fill="#74b153" />
+      <path d="M12 9 C 17 9 19.5 6 20 2.5 C 16 2.5 12.5 4.5 12 9 Z" fill="#8cc46a" />
     </svg>
   );
 }
