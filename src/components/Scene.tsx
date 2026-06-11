@@ -283,36 +283,6 @@ function GardenDesk() {
         <Keycap x={324} y={172} w={9} h={9} />
         <Keycap x={337} y={178} w={9} h={9} fill={ACCENT_LEAF} rotate={14} />
 
-        {/* 名札 */}
-        <g>
-          <rect
-            x="80"
-            y="181"
-            width="56"
-            height="15"
-            rx="7.5"
-            fill="#fffdf5"
-            stroke="#dcc9a4"
-            strokeWidth="1"
-          />
-          <text x="108" y="192" textAnchor="middle" fontSize="10" fill="#7c6a4d">
-            claw44
-          </text>
-          <rect
-            x="266"
-            y="181"
-            width="60"
-            height="15"
-            rx="7.5"
-            fill="#fffdf5"
-            stroke="#dcc9a4"
-            strokeWidth="1"
-          />
-          <text x="296" y="192.5" textAnchor="middle" fontSize="10" fill="#7c6a4d">
-            小人キー
-          </text>
-        </g>
-
         {/* カタカタ */}
         <g transform="rotate(-5 64 62)">
           <text className="kata" style={pd(0)} x="64" y="62" fontSize="15" fill="#7c6a4d">
