@@ -267,6 +267,106 @@ body {
   }
 }
 
+.march {
+  position: absolute;
+  bottom: 2%;
+  left: 8%;
+  width: 230px;
+  animation: march-x 52s linear infinite;
+  animation-delay: -18s; /* ロード直後から画面内にいるように */
+}
+
+.march svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+@keyframes march-x {
+  from {
+    transform: translateX(-32vw);
+  }
+  to {
+    transform: translateX(112vw);
+  }
+}
+
+.bob {
+  animation: bob 0.34s ease-in-out infinite alternate;
+  animation-delay: var(--bd, 0s);
+}
+
+@keyframes bob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2.6px);
+  }
+}
+
+.stem {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: stem-sway 1.7s ease-in-out infinite alternate;
+  animation-delay: var(--sd, 0s);
+}
+
+@keyframes stem-sway {
+  from {
+    transform: rotate(-7deg);
+  }
+  to {
+    transform: rotate(7deg);
+  }
+}
+
+.prop {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: prop-spin 5s linear infinite;
+}
+
+@keyframes prop-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.whistles {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.whistle-ring {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  border: 3px solid rgba(242, 193, 78, 0.9);
+  box-shadow:
+    0 0 18px rgba(242, 193, 78, 0.55),
+    inset 0 0 10px rgba(242, 193, 78, 0.4);
+  animation: whistle 0.65s ease-out forwards;
+}
+
+@keyframes whistle {
+  from {
+    transform: scale(0.2);
+    opacity: 0.95;
+  }
+  to {
+    transform: scale(12);
+    opacity: 0;
+  }
+}
+
 .noise {
   position: fixed;
   inset: 0;
@@ -307,7 +407,14 @@ body {
   text-shadow: 0 3px 0 rgba(255, 255, 255, 0.6);
 }
 
-.name:hover {
+/* hover アニメは .reveal (forwards で opacity を保持) と別要素に分ける。
+   同じ要素だと animation が丸ごと差し替わって opacity:0 に戻り、名前が消える */
+.name-text {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.name-text:hover {
   animation: wiggle 0.6s ease;
 }
 
@@ -474,11 +581,16 @@ body {
   .sway-soft,
   .wing,
   .sprout,
-  .name:hover {
+  .march,
+  .bob,
+  .stem,
+  .prop,
+  .name-text:hover {
     animation: none !important;
   }
 
-  .butterfly {
+  .butterfly,
+  .whistles {
     display: none;
   }
 

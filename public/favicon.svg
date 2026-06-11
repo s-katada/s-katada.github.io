@@ -14,5 +14,10 @@
     <path d="M0 36 Q 16 26 32 33 T 64 30 V64 H0 Z" fill="#a9cf8b" />
     <path d="M0 46 Q 20 38 40 44 T 64 42 V64 H0 Z" fill="#6fae52" />
     <path d="M0 56 Q 32 50 64 55 V64 H0 Z" fill="#5d9a44" />
+    <path d="M50 41 C 50 38.5 49.5 36.5 49 35" stroke="#4d8038" stroke-width="1.6" fill="none" stroke-linecap="round" />
+    <ellipse cx="46.5" cy="33" rx="3.4" ry="2" transform="rotate(-32 46.5 33)" fill="#74b153" />
+    <circle cx="50" cy="46" r="4.6" fill="#e8533f" />
+    <circle cx="52" cy="45" r="1.5" fill="#fff" />
+    <circle cx="52.5" cy="45" r="0.7" fill="#2e2620" />
   </g>
 </svg>
