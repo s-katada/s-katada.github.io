@@ -18,29 +18,21 @@ const hourNow = () => {
 // 太陽/月が描く弧: 中心 (50vw, 80vh)、半径 (42vw, 66vh) の楕円の上半分
 const ARC = { cx: 50, cy: 80, rx: 42, ry: 66 };
 
-// ポインタ位置を弧上の進行度 p (0 = 東の地平線, 1 = 西の地平線) に投影する。
-// x 座標だけでなく角度で追従するので、弧を描くジェスチャーが素直に効く。
-const arcP = (clientX: number, clientY: number) => {
-  const u = ((clientX / window.innerWidth) * 100 - ARC.cx) / ARC.rx;
-  const v = (ARC.cy - (clientY / window.innerHeight) * 100) / ARC.ry;
-  const ang = Math.atan2(Math.max(v, -0.25), u);
-  return Math.min(Math.max(1 - ang / Math.PI, -0.08), 1.08);
-};
+const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);
 
 // 太陽と月。実時刻で弧の上を移動する。
-// 操作: 本体をクリック/ダイヤルをクリック = 昼夜反転、
-//       本体を弧に沿ってドラッグ or 右下のダイヤルを回す = 時間を直接動かす。
+// 操作はシンプルに: 太陽/月 (またはダイヤル) をクリック = 12時間ぶん空が回って昼夜反転。
+// 細かく動かしたいときは右下のダイヤルを回す (1周 = 24時間)。
 export function DayNight() {
   const [offset, setOffset] = useState(() => {
     const saved = window.sessionStorage.getItem("tod-offset");
     return saved === null ? 0 : Number(saved);
   });
   const [, setTick] = useState(0);
-  const [dragging, setDragging] = useState<"body" | "dial" | null>(null);
+  const [dialDragging, setDialDragging] = useState(false);
   const [hover, setHover] = useState(false);
-  const bodyDrag = useRef<{ startX: number; startY: number; base: 6 | 18; moved: boolean } | null>(
-    null,
-  );
+  const [tweening, setTweening] = useState(false);
+  const tweenRaf = useRef<number | null>(null);
   const dialDrag = useRef<{
     startX: number;
     startY: number;
@@ -52,12 +44,40 @@ export function DayNight() {
 
   useEffect(() => {
     const id = window.setInterval(() => setTick((t) => t + 1), 30000);
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(id);
+      if (tweenRaf.current !== null) window.cancelAnimationFrame(tweenRaf.current);
+    };
   }, []);
 
   const apply = (v: number) => {
     setOffset(v);
     window.sessionStorage.setItem("tod-offset", String(v));
+  };
+
+  // クリックで +12時間: 太陽が弧を滑り降りて月が昇るアニメーション
+  const flip = () => {
+    if (tweenRaf.current !== null) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      apply(offset + 12);
+      return;
+    }
+    const from = offset;
+    const start = performance.now();
+    const DURATION = 1800;
+    setTweening(true);
+    const step = (t: number) => {
+      const k = Math.min((t - start) / DURATION, 1);
+      setOffset(from + 12 * easeInOut(k));
+      if (k < 1) {
+        tweenRaf.current = window.requestAnimationFrame(step);
+      } else {
+        tweenRaf.current = null;
+        setTweening(false);
+        apply(from + 12);
+      }
+    };
+    tweenRaf.current = window.requestAnimationFrame(step);
   };
 
   const vh24 = (((hourNow() + offset) % 24) + 24) % 24;
@@ -73,41 +93,14 @@ export function DayNight() {
   const xvw = ARC.cx - ARC.rx + clamped * ARC.rx * 2;
   const yvh = ARC.cy - Math.sin(Math.min(Math.max(clamped, 0), 1) * Math.PI) * ARC.ry;
 
-  const capture = (e: React.PointerEvent<HTMLDivElement>) => {
+  /* ---- 時計ダイヤル: 回して時間を動かす (1周 = 24時間) ---- */
+
+  const onDialDown = (e: React.PointerEvent<HTMLDivElement>) => {
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
       // 合成イベント等で pointerId が無効な場合は capture なしで続行
     }
-  };
-
-  /* ---- 本体 (太陽/月) のドラッグ ---- */
-
-  const onBodyDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    capture(e);
-    bodyDrag.current = { startX: e.clientX, startY: e.clientY, base: isDay ? 6 : 18, moved: false };
-    setDragging("body");
-  };
-
-  const onBodyMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const d = bodyDrag.current;
-    if (!d) return;
-    if (!d.moved && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 6) return;
-    d.moved = true;
-    apply(d.base + arcP(e.clientX, e.clientY) * 12 - hourNow());
-  };
-
-  const onBodyUp = () => {
-    const d = bodyDrag.current;
-    bodyDrag.current = null;
-    setDragging(null);
-    if (d && !d.moved) apply(offset + 12); // タップで昼夜反転
-  };
-
-  /* ---- 時計ダイヤル: 回して時間を動かす (1周 = 24時間) ---- */
-
-  const onDialDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    capture(e);
     dialDrag.current = {
       startX: e.clientX,
       startY: e.clientY,
@@ -115,7 +108,7 @@ export function DayNight() {
       lastAng: null,
       vh: hourNow() + offset,
     };
-    setDragging("dial");
+    setDialDragging(true);
   };
 
   const onDialMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -141,8 +134,8 @@ export function DayNight() {
   const onDialUp = () => {
     const d = dialDrag.current;
     dialDrag.current = null;
-    setDragging(null);
-    if (d && !d.moved) apply(offset + 12);
+    setDialDragging(false);
+    if (d && !d.moved) flip();
   };
 
   const dialAngle = (vh24 - 12) * 15; // 正午が真上、深夜0時が真下
@@ -150,7 +143,7 @@ export function DayNight() {
   return (
     <>
       <svg
-        className={`arc-guide${hover || dragging === "body" ? " show" : ""}`}
+        className={`arc-guide${hover || tweening ? " show" : ""}`}
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden="true"
@@ -166,17 +159,10 @@ export function DayNight() {
       </svg>
 
       <div
-        className={`sky-body${dragging === "body" ? " dragging" : ""}`}
+        className={`sky-body${tweening ? " dragging" : ""}`}
         style={{ left: `${xvw}vw`, top: `${yvh}vh` }}
-        title={
-          isDay
-            ? "クリックで夜に / ドラッグで太陽を動かす"
-            : "クリックで昼に / ドラッグで月を動かす"
-        }
-        onPointerDown={onBodyDown}
-        onPointerMove={onBodyMove}
-        onPointerUp={onBodyUp}
-        onPointerCancel={onBodyUp}
+        title={isDay ? "クリックで夜にする" : "クリックで昼にする"}
+        onClick={flip}
         onPointerEnter={() => setHover(true)}
         onPointerLeave={() => setHover(false)}
       >
@@ -185,7 +171,7 @@ export function DayNight() {
 
       <div
         ref={dialRef}
-        className={`time-dial${dragging === "dial" ? " dragging" : ""}`}
+        className={`time-dial${dialDragging ? " dragging" : ""}`}
         title="まわして時間を動かす / クリックで昼夜反転"
         onPointerDown={onDialDown}
         onPointerMove={onDialMove}

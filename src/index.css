@@ -185,16 +185,16 @@ body {
   z-index: 1;
   transform: translate(-50%, -50%);
   pointer-events: auto;
-  cursor: grab;
-  touch-action: none;
+  cursor: pointer;
+  touch-action: manipulation;
   transition:
     left 1.6s linear,
     top 1.6s linear;
 }
 
+/* 反転アニメーション中は rAF が位置を駆動するので CSS transition を切る */
 .sky-body.dragging {
   transition: none;
-  cursor: grabbing;
 }
 
 /* 当たり判定を見た目より一回り大きく */
