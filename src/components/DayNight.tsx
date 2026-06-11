@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type Phase = "day" | "dusk" | "night" | "dawn";
 
-// 仮想時刻 (実時刻 + オフセット) から空のフェーズを決める
+// 仮想時刻から空のフェーズを決める
 const phaseOf = (h: number): Phase => {
   if (h >= 7 && h < 16.5) return "day";
   if (h >= 16.5 && h < 19) return "dusk";
@@ -15,14 +15,27 @@ const hourNow = () => {
   return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
 };
 
+// 昼夜はゆっくり自動で巡る: 12時間 = 40秒 (太陽も月も40秒かけて空を渡る)。
+// reduced-motion 時は自動進行なし (実時刻のみ)。
+const RATE = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 12 / 40;
+const T0 = performance.now();
+
+// 実時刻スタートで、そこから加速した時間が流れる
+const virtualNow = () => hourNow() + ((performance.now() - T0) / 1000) * RATE;
+
 // 太陽/月が描く弧: 中心 (50vw, 80vh)、半径 (42vw, 66vh) の楕円の上半分
 const ARC = { cx: 50, cy: 80, rx: 42, ry: 66 };
 
+const clampP = (p: number) => Math.min(Math.max(p, -0.06), 1.06);
+
+const posOf = (p: number) => ({
+  left: `${ARC.cx - ARC.rx + p * ARC.rx * 2}vw`,
+  top: `${ARC.cy - Math.sin(Math.min(Math.max(p, 0), 1) * Math.PI) * ARC.ry}vh`,
+});
+
 const easeInOut = (k: number) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);
 
-// 太陽と月。実時刻で弧の上を移動する。
-// 操作はシンプルに: 太陽/月 (またはダイヤル) をクリック = 12時間ぶん空が回って昼夜反転。
-// 細かく動かしたいときは右下のダイヤルを回す (1周 = 24時間)。
+// 太陽と月。ゆっくり自動で巡りつつ、クリックで一気に昼夜反転、ダイヤルで自由に操作。
 export function DayNight() {
   const [offset, setOffset] = useState(() => {
     const saved = window.sessionStorage.getItem("tod-offset");
@@ -30,7 +43,6 @@ export function DayNight() {
   });
   const [, setTick] = useState(0);
   const [dialDragging, setDialDragging] = useState(false);
-  const [hover, setHover] = useState(false);
   const [tweening, setTweening] = useState(false);
   const tweenRaf = useRef<number | null>(null);
   const dialDrag = useRef<{
@@ -42,8 +54,9 @@ export function DayNight() {
   } | null>(null);
   const dialRef = useRef<HTMLDivElement>(null);
 
+  // 800ms ごとに再描画。位置は CSS transition が滑らかに補間する
   useEffect(() => {
-    const id = window.setInterval(() => setTick((t) => t + 1), 30000);
+    const id = window.setInterval(() => setTick((t) => t + 1), 800);
     return () => {
       window.clearInterval(id);
       if (tweenRaf.current !== null) window.cancelAnimationFrame(tweenRaf.current);
@@ -55,10 +68,10 @@ export function DayNight() {
     window.sessionStorage.setItem("tod-offset", String(v));
   };
 
-  // クリックで +12時間: 太陽が弧を滑り降りて月が昇るアニメーション
+  // クリックで +12時間: 弧に沿って一気に滑るアニメーション
   const flip = () => {
     if (tweenRaf.current !== null) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (RATE === 0) {
       apply(offset + 12);
       return;
     }
@@ -80,18 +93,20 @@ export function DayNight() {
     tweenRaf.current = window.requestAnimationFrame(step);
   };
 
-  const vh24 = (((hourNow() + offset) % 24) + 24) % 24;
+  const vhRaw = virtualNow() + offset;
+  const vh24 = ((vhRaw % 24) + 24) % 24;
   const phase = phaseOf(vh24);
   const isDay = vh24 >= 6 && vh24 < 18;
-  const p = isDay ? (vh24 - 6) / 12 : ((vh24 - 18 + 24) % 24) / 12;
 
   useLayoutEffect(() => {
     document.documentElement.dataset.phase = phase;
   }, [phase]);
 
-  const clamped = Math.min(Math.max(p, -0.06), 1.06);
-  const xvw = ARC.cx - ARC.rx + clamped * ARC.rx * 2;
-  const yvh = ARC.cy - Math.sin(Math.min(Math.max(clamped, 0), 1) * Math.PI) * ARC.ry;
+  // 太陽と月は別要素: それぞれ自分の進行度を持ち、沈んでいる間は透明のまま反対側へ戻る
+  const sunRaw = (vh24 - 6) / 12;
+  const moonRaw = ((vh24 - 18 + 24) % 24) / 12;
+  const sunUp = sunRaw > -0.03 && sunRaw < 1.03;
+  const moonUp = moonRaw > -0.03 && moonRaw < 1.03;
 
   /* ---- 時計ダイヤル: 回して時間を動かす (1周 = 24時間) ---- */
 
@@ -106,7 +121,7 @@ export function DayNight() {
       startY: e.clientY,
       moved: false,
       lastAng: null,
-      vh: hourNow() + offset,
+      vh: virtualNow() + offset,
     };
     setDialDragging(true);
   };
@@ -126,7 +141,7 @@ export function DayNight() {
     if (d.lastAng !== null) {
       const delta = ((ang - d.lastAng + 540) % 360) - 180;
       d.vh += delta / 15; // 15° = 1時間
-      apply(d.vh - hourNow());
+      apply(d.vh - virtualNow());
     }
     d.lastAng = ang;
   };
@@ -138,35 +153,27 @@ export function DayNight() {
     if (d && !d.moved) flip();
   };
 
-  const dialAngle = (vh24 - 12) * 15; // 正午が真上、深夜0時が真下
+  // 巻き戻さず回り続けるよう、mod しない時刻で角度を出す (正午が真上)
+  const dialAngle = (vhRaw - 12) * 15;
 
   return (
     <>
-      <svg
-        className={`arc-guide${hover || tweening ? " show" : ""}`}
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden="true"
+      <div
+        className={`sky-body${tweening ? " dragging" : ""}${sunUp ? "" : " hidden"}`}
+        style={posOf(clampP(sunRaw))}
+        title="クリックで夜にする"
+        onClick={flip}
       >
-        <path
-          className="arc-path"
-          d={`M ${ARC.cx - ARC.rx} ${ARC.cy} A ${ARC.rx} ${ARC.ry} 0 0 1 ${ARC.cx + ARC.rx} ${ARC.cy}`}
-          fill="none"
-          strokeWidth="0.35"
-          strokeDasharray="1.4 2"
-          strokeLinecap="round"
-        />
-      </svg>
+        <div className="sun-core" />
+      </div>
 
       <div
-        className={`sky-body${tweening ? " dragging" : ""}`}
-        style={{ left: `${xvw}vw`, top: `${yvh}vh` }}
-        title={isDay ? "クリックで夜にする" : "クリックで昼にする"}
+        className={`sky-body${tweening ? " dragging" : ""}${moonUp ? "" : " hidden"}`}
+        style={posOf(clampP(moonRaw))}
+        title="クリックで昼にする"
         onClick={flip}
-        onPointerEnter={() => setHover(true)}
-        onPointerLeave={() => setHover(false)}
       >
-        {isDay ? <div className="sun-core" /> : <div className="moon-core" />}
+        <div className="moon-core" />
       </div>
 
       <div

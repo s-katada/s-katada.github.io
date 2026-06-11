@@ -188,13 +188,20 @@ body {
   cursor: pointer;
   touch-action: manipulation;
   transition:
-    left 1.6s linear,
-    top 1.6s linear;
+    left 1.2s linear,
+    top 1.2s linear,
+    opacity 0.8s ease;
 }
 
 /* 反転アニメーション中は rAF が位置を駆動するので CSS transition を切る */
 .sky-body.dragging {
-  transition: none;
+  transition: opacity 0.8s ease;
+}
+
+/* 地平線の下にいる間は見えない (反対側へ戻る移動もこの間に済ませる) */
+.sky-body.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* 当たり判定を見た目より一回り大きく */
@@ -203,31 +210,6 @@ body {
   position: absolute;
   inset: -32px;
   border-radius: 50%;
-}
-
-/* ドラッグ中/ホバー中に見える太陽・月の軌道ガイド */
-.arc-guide {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.arc-guide.show {
-  opacity: 1;
-}
-
-.arc-path {
-  stroke: rgba(122, 98, 62, 0.4);
-}
-
-[data-phase="night"] .arc-path,
-[data-phase="dusk"] .arc-path {
-  stroke: rgba(253, 250, 240, 0.45);
 }
 
 /* 右下の時計ダイヤル: 回すと時間が動く (1周 = 24時間) */
