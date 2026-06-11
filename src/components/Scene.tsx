@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { DayNight } from "./DayNight";
 
 // 前景の草花の配置: [種類, x座標, スケール, 揺れの開始遅延(s)]
 const FLORA: Array<["tuft" | "daisy" | "clover", number, number, number]> = [
@@ -299,12 +300,106 @@ function GardenDesk() {
   );
 }
 
+// 夜空の星 (上空 65% に固定配置)
+function Stars() {
+  const dots: Array<[number, number, number, number?]> = [
+    [6, 5, 0.28, 0],
+    [14, 9, 0.2],
+    [22, 4, 0.32, 0.6],
+    [30, 12, 0.2],
+    [38, 7, 0.26, 1.2],
+    [46, 3, 0.2],
+    [54, 10, 0.3, 0.3],
+    [62, 6, 0.2],
+    [70, 12, 0.26, 1.6],
+    [78, 5, 0.32],
+    [86, 9, 0.2, 0.9],
+    [94, 4, 0.26],
+    [10, 18, 0.2, 1.4],
+    [26, 20, 0.28],
+    [42, 17, 0.2, 0.5],
+    [58, 21, 0.3],
+    [74, 18, 0.2, 1.1],
+    [90, 21, 0.26],
+    [18, 28, 0.22, 0.2],
+    [50, 27, 0.28],
+    [82, 28, 0.2, 1.8],
+    [34, 33, 0.24],
+    [66, 32, 0.2, 0.7],
+    [96, 30, 0.22],
+  ];
+  return (
+    <div className="stars">
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none" role="presentation">
+        {dots.map(([x, y, r, tw], i) =>
+          tw === undefined ? (
+            <circle key={i} cx={x} cy={y} r={r} fill="#fdfaf0" />
+          ) : (
+            <circle
+              key={i}
+              className="tw"
+              style={{ "--td": `${tw}s` } as CSSProperties}
+              cx={x}
+              cy={y}
+              r={r}
+              fill="#fdfaf0"
+            />
+          ),
+        )}
+      </svg>
+    </div>
+  );
+}
+
+// 夜だけ灯る明かり (丘レイヤーと同じ座標系で重ねる)
+function HillsGlow() {
+  return (
+    <div className="hills-glow">
+      <svg viewBox="0 0 1440 520" preserveAspectRatio="xMidYMax slice" role="presentation">
+        <g className="layer-mid">
+          <circle cx="316" cy="345" r="13" fill="rgba(255,214,130,0.35)" />
+          <circle cx="316" cy="345" r="4.5" fill="#ffeaa6" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+// 夜のノートPCの明かり
+function DeskGlow() {
+  return (
+    <div className="desk-glow">
+      <svg viewBox="0 0 430 250" overflow="visible" role="presentation">
+        <defs>
+          <filter id="soft-glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="12" />
+          </filter>
+        </defs>
+        <ellipse
+          cx="205"
+          cy="46"
+          rx="92"
+          ry="60"
+          fill="rgba(150,190,255,0.15)"
+          filter="url(#soft-glow)"
+        />
+        <rect x="156" y="12" width="98" height="58" rx="4" fill="rgba(165,200,255,0.22)" />
+      </svg>
+    </div>
+  );
+}
+
 // ポツンと一軒家の庭で、自作キーボードをカタカタ打ちながら開発している風景。
+// 空は実時刻に連動して昼夜が移り変わる (DayNight)。
 export function Scene() {
   return (
     <div className="scene" aria-hidden="true">
+      <div className="sky-overlay sky-dusk" />
+      <div className="sky-overlay sky-night" />
+      <div className="sky-overlay sky-dawn" />
+      <Stars />
+      <DayNight />
       <div className="layer-sky">
-        <div className="sun" />
         <div className="cloud cloud-a" />
         <div className="cloud cloud-b" />
         <div className="cloud cloud-c" />
@@ -513,7 +608,13 @@ export function Scene() {
         </svg>
       </div>
 
+      <HillsGlow />
       <GardenDesk />
+      <DeskGlow />
+
+      <div className="firefly f1" />
+      <div className="firefly f2" />
+      <div className="firefly f3" />
 
       <div className="butterfly">
         <svg viewBox="0 0 44 32">

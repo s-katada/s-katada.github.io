@@ -13,8 +13,59 @@
   --paper: #fffdf5;
   --edge: #ead9b8;
   --font-round: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --name-shadow: rgba(255, 255, 255, 0.6);
   --mx: 0;
   --my: 0;
+}
+
+/* 夜はテキストを明るく反転 (空が暗くなるため) */
+[data-phase="night"] {
+  --ink: #ece5d3;
+  --ink-soft: #c2b69b;
+  --ink-muted: #9a8f78;
+  --name-shadow: rgba(13, 21, 42, 0.6);
+}
+
+/* 風景の昼夜トーン (フェーズに応じて暗く・色味を変える) */
+.layer-sky,
+.hills,
+.desk,
+.butterfly {
+  transition:
+    filter 2.5s ease,
+    opacity 2.5s ease;
+}
+
+[data-phase="dusk"] .layer-sky,
+[data-phase="dusk"] .hills,
+[data-phase="dusk"] .desk,
+[data-phase="dusk"] .butterfly {
+  filter: brightness(0.86) sepia(0.18) saturate(1.05);
+}
+
+[data-phase="night"] .layer-sky,
+[data-phase="night"] .hills,
+[data-phase="night"] .desk {
+  filter: brightness(0.42) saturate(0.55) contrast(0.96);
+}
+
+[data-phase="dawn"] .layer-sky,
+[data-phase="dawn"] .hills,
+[data-phase="dawn"] .desk,
+[data-phase="dawn"] .butterfly {
+  filter: brightness(0.9) sepia(0.12);
+}
+
+[data-phase="night"] .butterfly {
+  opacity: 0;
+}
+
+[data-phase="night"] .cloud {
+  opacity: 0.3;
+}
+
+[data-phase="dusk"] .cloud {
+  opacity: 0.7;
 }
 
 * {
@@ -56,22 +107,137 @@ body {
   pointer-events: none;
 }
 
-.layer-sky {
+/* 空のフェーズ用クロスフェード層 */
+.sky-overlay {
   position: absolute;
   inset: 0;
-  transform: translate3d(calc(var(--mx) * -8px), calc(var(--my) * -5px), 0);
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 3s ease;
 }
 
-.sun {
+.sky-dusk {
+  background: linear-gradient(180deg, #6a7bb8 0%, #c987a0 45%, #f3a987 72%, #fdd9a3 100%);
+}
+
+.sky-night {
+  background: linear-gradient(180deg, #0d1530 0%, #16223f 55%, #27365c 100%);
+}
+
+.sky-dawn {
+  background: linear-gradient(180deg, #5b6dab 0%, #bd8aa9 48%, #f6c290 100%);
+}
+
+[data-phase="dusk"] .sky-dusk,
+[data-phase="night"] .sky-night,
+[data-phase="dawn"] .sky-dawn {
+  opacity: 1;
+}
+
+/* 星空 */
+.stars {
   position: absolute;
-  top: 9%;
-  right: 11%;
-  width: 110px;
-  height: 110px;
+  inset: 0 0 35% 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+
+.stars svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+[data-phase="night"] .stars {
+  opacity: 1;
+}
+
+[data-phase="dawn"] .stars {
+  opacity: 0.25;
+}
+
+[data-phase="dusk"] .stars {
+  opacity: 0.15;
+}
+
+.tw {
+  animation: twinkle 2.6s ease-in-out infinite alternate;
+  animation-delay: var(--td, 0s);
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 0.95;
+  }
+}
+
+/* 太陽と月: 実時刻で弧を描き、ドラッグ/クリックで操作できる */
+.sky-body {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  transition:
+    left 1.6s linear,
+    top 1.6s linear;
+}
+
+.sky-body.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+
+.sun-core {
+  width: clamp(72px, 12vw, 110px);
+  height: clamp(72px, 12vw, 110px);
   border-radius: 50%;
   background: radial-gradient(circle, #fff3c4 0%, #ffd97e 55%, rgba(255, 217, 126, 0) 75%);
   box-shadow: 0 0 90px 45px rgba(255, 222, 148, 0.4);
   animation: sun-breathe 7s ease-in-out infinite alternate;
+}
+
+.moon-core {
+  position: relative;
+  width: clamp(60px, 10vw, 86px);
+  height: clamp(60px, 10vw, 86px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 34%, #fbf7e6, #ece3c2 58%, #d9cfa9);
+  box-shadow: 0 0 60px 22px rgba(243, 236, 205, 0.32);
+}
+
+.moon-core::before,
+.moon-core::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(195, 185, 150, 0.45);
+}
+
+.moon-core::before {
+  width: 18%;
+  height: 18%;
+  left: 26%;
+  top: 52%;
+}
+
+.moon-core::after {
+  width: 12%;
+  height: 12%;
+  left: 58%;
+  top: 28%;
+}
+
+.layer-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transform: translate3d(calc(var(--mx) * -8px), calc(var(--my) * -5px), 0);
 }
 
 @keyframes sun-breathe {
@@ -159,7 +325,30 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
+  z-index: 3;
   height: clamp(230px, 44vh, 470px);
+}
+
+.hills-glow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  height: clamp(230px, 44vh, 470px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2.5s ease;
+}
+
+.hills-glow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+[data-phase="night"] .hills-glow {
+  opacity: 1;
 }
 
 .hills svg {
@@ -219,8 +408,78 @@ body {
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 3;
   width: 36px;
   animation: flutter 32s ease-in-out infinite;
+  transition: opacity 2.5s ease;
+}
+
+/* 蛍 (夜だけ) */
+.firefly {
+  position: absolute;
+  z-index: 4;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffeb99;
+  box-shadow: 0 0 12px 4px rgba(255, 230, 140, 0.6);
+  opacity: 0;
+  transition: opacity 2.5s ease;
+  pointer-events: none;
+}
+
+.f1 {
+  left: 16%;
+  bottom: 14%;
+}
+
+.f2 {
+  left: 64%;
+  bottom: 9%;
+}
+
+.f3 {
+  left: 85%;
+  bottom: 17%;
+}
+
+[data-phase="night"] .firefly {
+  animation:
+    fly-drift 11s ease-in-out infinite alternate,
+    fly-pulse 2.1s ease-in-out infinite;
+}
+
+[data-phase="night"] .f2 {
+  animation-duration: 13s, 1.7s;
+}
+
+[data-phase="night"] .f3 {
+  animation-duration: 9s, 2.5s;
+}
+
+@keyframes fly-drift {
+  0% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(38px, -28px);
+  }
+  66% {
+    transform: translate(-22px, -46px);
+  }
+  100% {
+    transform: translate(14px, -8px);
+  }
+}
+
+@keyframes fly-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .butterfly svg {
@@ -267,7 +526,8 @@ body {
   }
 }
 
-.desk {
+.desk,
+.desk-glow {
   position: absolute;
   bottom: 2.5%;
   left: 50%;
@@ -275,7 +535,23 @@ body {
   transform: translateX(-50%);
 }
 
-.desk svg {
+.desk {
+  z-index: 3;
+}
+
+.desk-glow {
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2.5s ease;
+}
+
+[data-phase="night"] .desk-glow {
+  opacity: 1;
+}
+
+.desk svg,
+.desk-glow svg {
   display: block;
   width: 100%;
   overflow: visible;
@@ -434,6 +710,7 @@ body {
   font-size: clamp(1rem, 2.4vw, 1.2rem);
   font-weight: 500;
   color: var(--ink-soft);
+  transition: color 2.5s ease;
 }
 
 .name {
@@ -445,7 +722,10 @@ body {
   letter-spacing: -0.01em;
   line-height: 1.1;
   color: var(--ink);
-  text-shadow: 0 3px 0 rgba(255, 255, 255, 0.6);
+  text-shadow: 0 3px 0 var(--name-shadow);
+  transition:
+    color 2.5s ease,
+    text-shadow 2.5s ease;
 }
 
 /* hover アニメは .reveal (forwards で opacity を保持) と別要素に分ける。
@@ -487,6 +767,7 @@ body {
   letter-spacing: 0.16em;
   text-transform: lowercase;
   color: var(--ink-soft);
+  transition: color 2.5s ease;
 }
 
 /* ───────────────────────── links ───────────────────────── */
@@ -508,7 +789,7 @@ body {
   background: var(--paper);
   border: 2px solid var(--edge);
   border-radius: 999px;
-  color: var(--ink);
+  color: #4a3a28; /* ボタンは夜も明るい紙のままなので --ink には追従させない */
   text-decoration: none;
   font-family: var(--font-round);
   font-size: 0.98rem;
@@ -538,7 +819,7 @@ body {
 }
 
 .link-btn .at {
-  color: var(--ink-muted);
+  color: #a08c68;
   font-size: 0.8rem;
   font-weight: 500;
   transition: color 0.2s ease;
@@ -607,25 +888,29 @@ body {
   .link-btn {
     padding: 0.75rem 1.2rem;
   }
-
-  .sun {
-    right: 6%;
-    width: 84px;
-    height: 84px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cloud,
-  .sun,
+  .sun-core,
   .sway,
   .sway-soft,
   .wing,
   .sprout,
   .clack,
   .blinkc,
+  .tw,
+  .firefly,
   .name-text:hover {
     animation: none !important;
+  }
+
+  [data-phase="night"] .firefly {
+    opacity: 0.9;
+  }
+
+  .sky-body {
+    transition: none;
   }
 
   .kata {
