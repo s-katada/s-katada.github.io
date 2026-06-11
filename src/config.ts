@@ -4,5 +4,5 @@ export const profile = {
   name: "s-katada",
   role: "Software Engineer / Keyboard Builder",
   github: { handle: "s-katada", url: "https://github.com/s-katada" },
-  x: { handle: "digllet_3", url: "https://x.com/digllet_3" },
+  x: { handle: "diglett_3", url: "https://x.com/diglett_3" },
 } as const;

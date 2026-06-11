@@ -28,6 +28,7 @@
 
 /* 風景の昼夜トーン (フェーズに応じて暗く・色味を変える) */
 .layer-sky,
+.mountain,
 .hills,
 .desk,
 .butterfly {
@@ -37,6 +38,7 @@
 }
 
 [data-phase="dusk"] .layer-sky,
+[data-phase="dusk"] .mountain,
 [data-phase="dusk"] .hills,
 [data-phase="dusk"] .desk,
 [data-phase="dusk"] .butterfly {
@@ -44,12 +46,14 @@
 }
 
 [data-phase="night"] .layer-sky,
+[data-phase="night"] .mountain,
 [data-phase="night"] .hills,
 [data-phase="night"] .desk {
   filter: brightness(0.42) saturate(0.55) contrast(0.96);
 }
 
 [data-phase="dawn"] .layer-sky,
+[data-phase="dawn"] .mountain,
 [data-phase="dawn"] .hills,
 [data-phase="dawn"] .desk,
 [data-phase="dawn"] .butterfly {
@@ -193,6 +197,127 @@ body {
   cursor: grabbing;
 }
 
+/* 当たり判定を見た目より一回り大きく */
+.sky-body::after {
+  content: "";
+  position: absolute;
+  inset: -32px;
+  border-radius: 50%;
+}
+
+/* ドラッグ中/ホバー中に見える太陽・月の軌道ガイド */
+.arc-guide {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.arc-guide.show {
+  opacity: 1;
+}
+
+.arc-path {
+  stroke: rgba(122, 98, 62, 0.4);
+}
+
+[data-phase="night"] .arc-path,
+[data-phase="dusk"] .arc-path {
+  stroke: rgba(253, 250, 240, 0.45);
+}
+
+/* 右下の時計ダイヤル: 回すと時間が動く (1周 = 24時間) */
+.time-dial {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 6;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--edge);
+  box-shadow:
+    0 4px 0 var(--edge),
+    0 10px 18px rgba(122, 98, 62, 0.18);
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+  transition: transform 0.18s ease;
+}
+
+.time-dial:hover,
+.time-dial.dragging {
+  transform: scale(1.07);
+}
+
+.time-dial.dragging {
+  cursor: grabbing;
+}
+
+.dial-face {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #cfe9f7 0%, #bfe1f3 50%, #2e3c66 50%, #1d2a4d 100%);
+}
+
+.dial-rot {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.8s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.time-dial.dragging .dial-rot {
+  transition: none;
+}
+
+.dial-stick {
+  position: absolute;
+  left: calc(50% - 1px);
+  top: 15px;
+  height: calc(50% - 15px);
+  width: 2px;
+  border-radius: 2px;
+  background: #8a6644;
+}
+
+.dial-tip {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+}
+
+.dial-tip.day {
+  background: radial-gradient(circle at 35% 35%, #ffe9a8, #f5c542);
+  box-shadow: 0 0 8px rgba(245, 197, 66, 0.8);
+}
+
+.dial-tip.night {
+  background: radial-gradient(circle at 35% 35%, #fbf7e6, #d9cfa9);
+  box-shadow: 0 0 8px rgba(240, 234, 200, 0.7);
+}
+
+.dial-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8a6644;
+}
+
 .sun-core {
   width: clamp(72px, 12vw, 110px);
   height: clamp(72px, 12vw, 110px);
@@ -318,6 +443,25 @@ body {
   to {
     transform: translateX(115vw);
   }
+}
+
+/* 二ツ森山: slice クロップの影響を受けない独立レイヤー。
+   横方向は画面幅に追従して伸縮し、高さは常に確保されるので双耳峰が削れない */
+.mountain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: max(40vh, 24vw);
+  max-height: 78vh;
+  pointer-events: none;
+}
+
+.mountain svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .hills {
@@ -887,6 +1031,24 @@ body {
 
   .link-btn {
     padding: 0.75rem 1.2rem;
+  }
+
+  .time-dial {
+    width: 54px;
+    height: 54px;
+    right: 0.9rem;
+    bottom: 0.9rem;
+  }
+
+  .dial-stick {
+    top: 12px;
+    height: calc(50% - 12px);
+  }
+
+  .dial-tip {
+    top: 6px;
+    width: 11px;
+    height: 11px;
   }
 }
 

@@ -365,6 +365,25 @@ function HillsGlow() {
   );
 }
 
+// 二ツ森山 (岐阜県中津川市福岡から望む双耳峰: 左が本峰の西峰 1,223.5m、右がやや低い東峰=東森山)。
+// 丘の svg は slice でクロップされるため、山は独立レイヤー (横は伸縮・高さは常に確保) にして
+// どの画面幅でも双耳峰が見えるようにしている。
+function Mountain() {
+  return (
+    <div className="mountain">
+      <svg viewBox="0 0 1440 240" preserveAspectRatio="none" role="presentation">
+        <g className="layer-far">
+          <path
+            d="M0 150 C 120 144 220 140 320 128 C 420 110 500 66 590 30 C 615 20 645 20 668 32 C 700 50 718 66 740 66 C 762 66 780 52 806 38 C 826 28 852 28 874 40 C 940 76 1010 116 1100 136 C 1200 150 1320 150 1440 146 L 1440 240 L 0 240 Z"
+            fill="#a3c4a8"
+            opacity="0.9"
+          />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 // 夜のノートPCの明かり
 function DeskGlow() {
   return (
@@ -404,6 +423,8 @@ export function Scene() {
         <div className="cloud cloud-b" />
         <div className="cloud cloud-c" />
       </div>
+
+      <Mountain />
 
       <div className="hills">
         <svg viewBox="0 0 1440 520" preserveAspectRatio="xMidYMax slice" role="presentation">
@@ -523,13 +544,7 @@ export function Scene() {
           </defs>
 
           <g className="layer layer-far">
-            {/* 二ツ森山 (岐阜県中津川市福岡から望む双耳峰: 左が本峰の西峰 1,223.5m、右がやや低い東峰=東森山) */}
-            <path
-              d="M0 360 C 120 350 220 345 320 330 C 420 312 500 268 590 232 C 615 222 645 222 668 234 C 700 252 718 268 740 268 C 762 268 780 254 806 240 C 826 230 852 230 874 242 C 940 278 1010 318 1100 338 C 1200 352 1320 352 1440 348 L 1440 520 L 0 520 Z"
-              fill="#a3c4a8"
-              opacity="0.9"
-            />
-            {/* 山裾の霞 */}
+            {/* 山裾の霞 (山本体は独立レイヤーの Mountain に分離) */}
             <path
               d="M0 402 C 240 382 480 390 720 398 C 960 406 1200 384 1440 396 L 1440 520 L 0 520 Z"
               fill="#b7d8a4"
