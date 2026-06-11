@@ -7,28 +7,23 @@ import { GitHubIcon, SproutIcon, XIcon } from "./components/icons";
 const delay = (s: number) => ({ "--d": `${s}s` }) as CSSProperties;
 
 export default function App() {
-  const year = new Date().getFullYear();
-
   return (
     <>
       <Scene />
       <ParallaxDriver />
 
       <main className="hero">
-        <p className="welcome reveal" style={delay(0.05)}>
-          {profile.welcome}
-        </p>
-        <p className="hello reveal" style={delay(0.2)}>
+        <p className="hello reveal" style={delay(0.05)}>
           {profile.greeting}
         </p>
-        <h1 className="name reveal" style={delay(0.35)}>
+        <h1 className="name reveal" style={delay(0.2)}>
           {profile.name}
           <SproutIcon />
         </h1>
-        <p className="role reveal" style={delay(0.5)}>
+        <p className="role reveal" style={delay(0.35)}>
           {profile.role}
         </p>
-        <nav className="links reveal" style={delay(0.7)} aria-label="Social links">
+        <nav className="links reveal" style={delay(0.55)} aria-label="Social links">
           <a
             className="link-btn github"
             href={profile.github.url}
@@ -46,10 +41,6 @@ export default function App() {
           </a>
         </nav>
       </main>
-
-      <footer className="foot reveal" style={delay(0.95)}>
-        © {year} {profile.name} · built with react + vite+
-      </footer>
 
       <div className="noise" aria-hidden="true" />
     </>
